@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="" xml:lang="">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <meta name="author" content="Kyle Wong" />
+  <title>CS180 Project 3</title>
+  <style>
+    html {
+      line-height: 1.5;
+      font-family: Georgia, serif;
+      font-size: 20px;
+      color: #1a1a1a;
+      background-color: #fdfdfd;
+    }
+    body {
+      margin: 0 auto;
+      max-width: 36em;
+      padding-left: 50px;
+      padding-right: 50px;
+      padding-top: 50px;
+      padding-bottom: 50px;
+      hyphens: auto;
+      overflow-wrap: break-word;
+      text-rendering: optimizeLegibility;
+      font-kerning: normal;
+    }
+    @media (max-width: 600px) {
+      body {
+        font-size: 0.9em;
+        padding: 1em;
+      }
+      h1 {
+        font-size: 1.8em;
+      }
+    }
+    @media print {
+      body {
+        background-color: transparent;
+        color: black;
+        font-size: 12pt;
+      }
+      p, h2, h3 {
+        orphans: 3;
+        widows: 3;
+      }
+      h2, h3, h4 {
+        page-break-after: avoid;
+      }
+    }
+    p {
+      margin: 1em 0;
+    }
+    a {
+      color: #1a1a1a;
+    }
+    a:visited {
+      color: #1a1a1a;
+    }
+    img {
+      max-width: 100%;
+    }
+    h1, h2, h3, h4, h5, h6 {
+      margin-top: 1.4em;
+    }
+    h5, h6 {
+      font-size: 1em;
+      font-style: italic;
+    }
+    h6 {
+      font-weight: normal;
+    }
+    ol, ul {
+      padding-left: 1.7em;
+      margin-top: 1em;
+    }
+    li > ol, li > ul {
+      margin-top: 0;
+    }
+    blockquote {
+      margin: 1em 0 1em 1.7em;
+      padding-left: 1em;
+      border-left: 2px solid #e6e6e6;
+      color: #606060;
+    }
+    code {
+      font-family: Menlo, Monaco, 'Lucida Console', Consolas, monospace;
+      font-size: 85%;
+      margin: 0;
+    }
+    pre {
+      margin: 1em 0;
+      overflow: auto;
+    }
+    pre code {
+      padding: 0;
+      overflow: visible;
+      overflow-wrap: normal;
+    }
+    .sourceCode {
+     background-color: transparent;
+     overflow: visible;
+    }
+    hr {
+      background-color: #1a1a1a;
+      border: none;
+      height: 1px;
+      margin: 1em 0;
+    }
+    table {
+      margin: 1em 0;
+      border-collapse: collapse;
+      width: 100%;
+      overflow-x: auto;
+      display: block;
+      font-variant-numeric: lining-nums tabular-nums;
+    }
+    table caption {
+      margin-bottom: 0.75em;
+    }
+    tbody {
+      margin-top: 0.5em;
+      border-top: 1px solid #1a1a1a;
+      border-bottom: 1px solid #1a1a1a;
+    }
+    th {
+      border-top: 1px solid #1a1a1a;
+      padding: 0.25em 0.5em 0.25em 0.5em;
+    }
+    td {
+      padding: 0.125em 0.5em 0.25em 0.5em;
+    }
+    header {
+      margin-bottom: 4em;
+      text-align: center;
+    }
+    #TOC li {
+      list-style: none;
+    }
+    #TOC ul {
+      padding-left: 1.3em;
+    }
+    #TOC > ul {
+      padding-left: 0;
+    }
+    #TOC a:not(:hover) {
+      text-decoration: none;
+    }
+    code{white-space: pre-wrap;}
+    span.smallcaps{font-variant: small-caps;}
+    div.columns{display: flex; gap: min(4vw, 1.5em);}
+    div.column{flex: auto; overflow-x: auto;}
+    div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+    ul.task-list{list-style: none;}
+    ul.task-list li input[type="checkbox"] {
+      width: 0.8em;
+      margin: 0 0.8em 0.2em -1.6em;
+      vertical-align: middle;
+    }
+    .display.math{display: block; text-align: center; margin: 0.5rem auto;}
+  </style>
+  <!--[if lt IE 9]>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/html5shiv/3.7.3/html5shiv-printshiv.min.js"></script>
+  <![endif]-->
+</head>
+<body>
+<header id="title-block-header">
+<h1 class="title">CS180 Project 3</h1>
+<p class="author">Kyle Wong</p>
+<p class="date">October 2023</p>
+</header>
+<h1 id="part-1.-defining-correspondences">Part 1. Defining
+Correspondences</h1>
+<p>Our goal is to morph the shapes of two images together. To do this we
+first need to select corresponding keypoints for each image. To make a
+2d warp we can use a triangular mesh that covers the whole image, using
+keypoints such that the triangles in each image correspond to each
+other. A good method for getting more evenly sized triangles is to use
+Delaunay triangulation to produce the triangular mesh.</p>
+<p><img src="im1.png" alt="image" /></p>
+<h1 id="part-2.-computing-the-mid-way-face">Part 2. Computing the
+“Mid-Way Face”</h1>
+<p>We must figure out how to get from one triangle to the corresponding
+triangle in the transformed image. We can set up a system of linear
+equations to solve for the transformation matrix.</p>
+<p>Given a triangle T <span
+class="math inline">(<em>a</em><sub><em>x</em></sub>,<em>a</em><sub><em>y</em></sub>)</span>,
+<span
+class="math inline">(<em>b</em><sub><em>x</em></sub>,<em>b</em><sub><em>y</em></sub>)</span>,
+and <span
+class="math inline">(<em>c</em><sub><em>x</em></sub>,<em>c</em><sub><em>y</em></sub>)</span>
+and a triangle T’ with vertices <span
+class="math inline">(<em>a</em><sub><em>x</em></sub>′,<em>a</em><sub><em>y</em></sub>′)</span>,
+<span
+class="math inline">(<em>b</em><sub><em>x</em></sub>′,<em>b</em><sub><em>y</em></sub>′)</span>,
+and <span
+class="math inline">(<em>c</em><sub><em>x</em></sub>′,<em>c</em><sub><em>y</em></sub>′)</span>
+we can set up a system of linear equations that describes this affine
+warp.</p>
+<p><img src="im2.png" alt="image" /></p>
+<p><img src="im3.png" alt="image" /></p>
+<p>We can solve this for A =<br />
+Using this method, we can warp each triangle in the average mesh into
+the corresponding triangle in the original image’s mesh. This tells us
+which positions in the original image would warp to each pixel of the
+midway image, and I used linear barycentric interpolation interpolation
+to get the color for that pixel.</p>
+<p>We do this for both of the original face images to get the average
+shape. To get the average color we average the pixel values and then we
+have our mid-way face.</p>
+<p><img src="im4.png" alt="image" /></p>
+<h1 id="part-3.-the-morph-sequence">Part 3. The Morph Sequence</h1>
+<p>To get each frame of the morph sequence, we perform the same
+procedure used for generating the mid-way face, but we use a weighted
+average instead.</p>
+<body>
+  <h1>Morph sequence</h1>
+    <img src="animation.gif" alt="Animated GIF">
+</body>
+<h1 id="part-4.-the-mean-face-of-a-population">Part 4. The “Mean Face”
+of a Population</h1>
+<p>Using The FEI face database (Brazilian face database) dataset, we can
+compute the average face of this population by calculating the average
+face shape and morphing each face into the average shape. I did not
+divide into subpopulations such as gender. Below are some examples of
+images from the dataset morphed into the average shape for the entire
+dataset.</p>
+<figure>
+<img src="im5.png"
+alt="Left is the original face. Right is the face morphed into the average shape." />
+<figcaption aria-hidden="true">Left is the original face. Right is the
+face morphed into the average shape.</figcaption>
+</figure>
+<figure>
+<img src="im6.png"
+alt="Left is the original face. Right is the face morphed into the average shape." />
+<figcaption aria-hidden="true">Left is the original face. Right is the
+face morphed into the average shape.</figcaption>
+</figure>
+<figure>
+<img src="im7.png" alt="Average Face of the Population" />
+<figcaption aria-hidden="true">Average Face of the
+Population</figcaption>
+</figure>
+<figure>
+<img src="im8.png"
+alt="Left is my face warped into the average geometry. Right is the average face warped into my geometry." />
+<figcaption aria-hidden="true">Left is my face warped into the average
+geometry. Right is the average face warped into my
+geometry.</figcaption>
+</figure>
+<h1 id="part-5.-caricatures-extrapolating-from-the-mean">Part 5.
+Caricatures: Extrapolating from the Mean</h1>
+<p>Let’s consider the average face shape to be a vector h and my face
+shape to be a vector f, then f<span class="math inline">−</span>h can be
+interpreted as what is unique about my face and we can extrapolate my
+face further in those directions. Therefore, by adding <span
+class="math inline"><em>α</em></span>(f<span
+class="math inline">−</span>h) to my face shape (where <span
+class="math inline"><em>α</em>&gt;</span>0) and morphing my face into
+the new shape, we can exaggerate my facial features to provide a
+caricature of myself.</p>
+<p>Below are the results for extrapolating from the mean of the entire
+FEI face database, including males and females.</p>
+<figure>
+<img src="im9.png"
+alt="Left is my normal face. Right is my face warped onto my unique features with \alpha=0.5." />
+<figcaption aria-hidden="true">Left is my normal face. Right is my face
+warped onto my unique features with <span
+class="math inline"><em>α</em></span>=0.5.</figcaption>
+</figure>
+<h1 id="bells-and-whistles-change-gender">Bells and Whistles: Change
+Gender</h1>
+<p>Out of curiosity, I projected my face onto the the average shape of
+Japanese actresses. I also adjusted what the weights accordingly. My
+correspondence points should have been a little different because it
+makes my chin really disproportionate. Other than that, I do look
+better.</p>
+<figure>
+<img src="avgjapactress.jpg" alt="Average Japanese actress face" />
+<figcaption aria-hidden="true">Average Japanese actress
+face</figcaption>
+</figure>
+<figure>
+<img src="im10.png"
+alt="Morphing just the shape: My face projected onto the average Japanese actress shape. As you can see my eyes get rounder and my face becomes narrower. My lips are bigger and my nose is a little smaller. So I’ve become more like typical Asian beauty standards." />
+<figcaption aria-hidden="true">Morphing just the shape: My face
+projected onto the average Japanese actress shape. As you can see my
+eyes get rounder and my face becomes narrower. My lips are bigger and my
+nose is a little smaller. So I’ve become more like typical Asian beauty
+standards.</figcaption>
+</figure>
+<figure>
+<img src="im11.png"
+alt="I’ve shifted the weights around and interestingly my face becomes noticeably more disproportionate around my chin. I’m not sure why my chin was so misshapen like that, I’m guessing the correspondence points were a little off." />
+<figcaption aria-hidden="true">I’ve shifted the weights around and
+interestingly my face becomes noticeably more disproportionate around my
+chin. I’m not sure why my chin was so misshapen like that, I’m guessing
+the correspondence points were a little off.</figcaption>
+</figure>
+<figure>
+<img src="im12.png"
+alt="Morphing just the appearance: I’ve averaged the images and it is quite obvious that my photo is misaligned with the average. My face was quite distorted and too close to the camera." />
+<figcaption aria-hidden="true">Morphing just the appearance: I’ve
+averaged the images and it is quite obvious that my photo is misaligned
+with the average. My face was quite distorted and too close to the
+camera.</figcaption>
+</figure>
+<figure>
+<img src="im13.png"
+alt="Morphing both the shape and the appearance: I’ve morphed the images together and it seems that I made a mistake with the correspondences so it is slightly misaligned around the mouth and chin." />
+<figcaption aria-hidden="true">Morphing both the shape and the
+appearance: I’ve morphed the images together and it seems that I made a
+mistake with the correspondences so it is slightly misaligned around the
+mouth and chin.</figcaption>
+</figure>
+</body>
+</html>
